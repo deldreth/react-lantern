@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`FetchProvider baseUrl 1`] = `
+<ContextProvider
+  value={
+    Object {
+      "baseUrl": "http://www.fireflyxd.com",
+      "cache": Map {},
+      "operations": Map {},
+      "request": undefined,
+      "updateRequest": [Function],
+    }
+  }
+>
+  <div>
+    Test
+  </div>
+</ContextProvider>
+`;

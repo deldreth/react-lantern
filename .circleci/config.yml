@@ -1,0 +1,84 @@
+defaults: &defaults
+  working_directory: ~/react-lantern
+
+version: 2
+jobs:
+  test:
+    docker:
+      - image: circleci/node:8.10
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            - v1-dependencies-
+      - run:
+          name: Install
+          command: yarn
+      - run:
+          name: Test
+          command: yarn test
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+  build:
+    docker:
+      - image: circleci/node:8.10
+    <<: *defaults
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "package.json" }}
+            - v1-dependencies-
+      - run:
+          name: Build
+          command: yarn compile
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+      - persist_to_workspace:
+          root: ~/react-lantern
+          paths: .
+
+  publish:
+    docker:
+      - image: circleci/node:8.10
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/react-lantern
+      - run:
+          name: Authenticate with registry
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/react-lantern/.npmrc
+      - run:
+          name: Publish
+          command: npm publish
+
+workflows:
+  version: 2
+  test-build-release:
+    jobs:
+      - test:
+          filters:
+            tags:
+              only: /^v.*/
+      - build:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /^v.*/
+      - publish:
+          requires:
+            - test
+            - build
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
